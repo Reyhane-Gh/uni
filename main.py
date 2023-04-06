@@ -6,14 +6,26 @@ def get_input():
     # tt = float(input("Transport Time: "))
     # tracks_per_ms = int(input("Number of Tracks per ms: "))
     # head_loc = int(input("Current Location of Header: "))
+    algorithm = int(input("\nSelect algorithm:\n1-elevator    2-fcfs\n-> "))
+    request = int(input("\nSelect requests:\n1-random requests   2-set requests\n-> "))
+
     rl = 4.17
     tt = 0.13
     tracks_per_ms = 4000
     head_loc = 8000
-    # requests = create_requests(tracks_per_ms, head_loc)
-    requests = [[8000, 0], [24000, 0], [56000, 0], [16000, 10], [64000, 20], [40000, 30]]
-    # elevator(rl, tt, tracks_per_ms, head_loc, requests)
-    fcfs(rl, tt, tracks_per_ms, head_loc, requests)
+    if request == 1:
+        requests = create_requests(tracks_per_ms, head_loc)
+    else:
+        requests = []
+        requests_num = int(input("\nPlease enter number of requests: "))
+        for i in range(requests_num):
+            request = input("-> ").split(' ')
+            requests.append([int(request[0]),int(request[1])])
+    # requests = [[8000, 0], [24000, 0], [56000, 0], [16000, 10], [64000, 20], [40000, 30]]
+    if algorithm == 1:
+        elevator(rl, tt, tracks_per_ms, head_loc, requests)
+    else:
+        fcfs(rl, tt, tracks_per_ms, head_loc, requests)
 
 
 def create_requests(tracks_per_ms, head_loc):
@@ -85,7 +97,6 @@ def elevator(rl, tt, tracks_per_ms, head_loc, requests):
                 j = -1
             j += 1
 
-    print(times)
     output(times)
 
 
