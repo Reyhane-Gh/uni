@@ -1,126 +1,153 @@
 import random as rd
+import sys
 
 
-def get_input():
-    # rl = float(input("Rotational Latency: "))
-    # tt = float(input("Transport Time: "))
-    # tracks_per_ms = int(input("Number of Tracks per ms: "))
-    # head_loc = int(input("Current Location of Header: "))
-    algorithm = int(input("\nSelect algorithm:\n1-elevator    2-fcfs\n-> "))
-    request = int(input("\nSelect requests:\n1-random requests   2-set requests\n-> "))
+def select_algorithm():
+    algorithm = int(input("Select algorithm:\n1-elevator    2-fcfs\n-> "))
 
-    rl = 4.17
-    tt = 0.13
-    tracks_per_ms = 4000
-    head_loc = 8000
-    if request == 1:
-        requests = create_requests(tracks_per_ms, head_loc)
-    else:
-        requests = []
-        requests_num = int(input("\nPlease enter number of requests: "))
-        for i in range(requests_num):
-            request = input("-> ").split(' ')
-            requests.append([int(request[0]),int(request[1])])
-    # requests = [[8000, 0], [24000, 0], [56000, 0], [16000, 10], [64000, 20], [40000, 30]]
     if algorithm == 1:
-        elevator(rl, tt, tracks_per_ms, head_loc, requests)
+        Elevator()
     else:
-        fcfs(rl, tt, tracks_per_ms, head_loc, requests)
+        Fcfs()
 
 
-def create_requests(tracks_per_ms, head_loc):
-    requests = [[head_loc, 0], ]
+class DiskScheduling:
+    def __init__(self):
+        self.requests = []
+        self.times = []
+        self.time = 0
+        rl = float(input("Rotational Latency: "))
+        tt = float(input("Transport Time: "))
+        self.tracks_per_ms = int(input("Number of Tracks per ms: "))
+        self.head_loc = int(input("Current Location of Header: "))
+        self.base_delay = rl + tt
+        self.current_loc = self.head_loc
 
-    for i in range(10):
-        request = rd.randrange(head_loc, 65536, tracks_per_ms)
-        time = rd.randrange(0, 60, 5)
-        requests.append([request, time])
-    requests.sort(key=lambda x: x[1])
+        self.set_requests()
 
-    print(requests)
-    return requests
-
-
-def elevator(rl, tt, tracks_per_ms, head_loc, requests):
-    direction = None
-    time = 0
-    times = []
-    base_delay = rl + tt
-    current_loc = head_loc
-    received_requests = []
-    remain_requests = requests.copy()
-    remain_requests.sort(key=lambda x: x[1])
-
-    i = 0
-    while i < len(remain_requests):
-        if remain_requests[i][1] <= time:
-            received_requests.append(remain_requests[i])
-            remain_requests.remove(remain_requests[i])
-            i = -1
-        i += 1
-
-    i = 0
-    while i < len(received_requests):
-        if direction is None:
-            track = received_requests[i][0]
-            if track - current_loc >= 0:
-                direction = 1
-            else:
-                direction = -1
+    def set_requests(self):
+        request = int(input("\nSelect requests:\n1-random requests   2-set requests\n-> "))
+        if request == 1:
+            requests_num = int(input("\nPlease enter number of requests: "))
+            self.create_requests(requests_num)
         else:
-            track = received_requests[i][0]
-            if (track - current_loc > 0 and direction == -1) or (track - current_loc < 0 and direction == 1):
-                if i == len(received_requests) - 1:
-                    direction *= -1
-                    i = 0
-                else:
-                    i += 1
+            requests_num = int(input("\nPlease enter number of requests: "))
+            print('Enter requests:(Ex: 24000 2)')
+            for i in range(requests_num):
+                request = input("-> ").split(' ')
+                self.requests.append([int(request[0]), int(request[1])])
+
+    def create_requests(self, requests_num):
+        self.requests = [[self.head_loc, 0], ]
+
+        for i in range(requests_num - 1):
+            request = rd.randrange(0, 65536, self.tracks_per_ms)
+            time = rd.randrange(0, 100, 10)
+            self.requests.append([request, time])
+        self.requests.sort(key=lambda x: x[1])
+
+        self.print_request()
+
+    def print_request(self):
+        print('requests:')
+        for request in self.requests:
+            print(f"{request[0]}{' ' * (10 - len(str(request[0])))}{request[1]}")
+        print('*' * 15, '\n')
+
+    def output(self):
+        for i in range(len(self.times)):
+            print("Cylinder of Request: ", self.times[i][0], " Time Completed: ", round(self.times[i][1], 2))
+
+
+class Elevator(DiskScheduling):
+    def __init__(self):
+        super().__init__()
+        self.direction = None
+        self.received_requests = []
+        self.remain_requests = self.requests.copy()
+        self.remain_requests.sort(key=lambda x: x[1])
+
+        self.elevator()
+
+    def elevator(self):
+        self.receive_request()
+        while True:
+            min_dis, min_i = self.find_min_dis()
+
+            if min_dis == sys.maxsize:
+                self.time = self.remain_requests[0][1]
+                self.receive_request()
                 continue
 
-        distance = abs(track - current_loc)
-        current_loc = track
-        if distance == 0:
-            time += base_delay + (distance / tracks_per_ms)
-        else:
-            time += base_delay + (distance / tracks_per_ms) + 1
-        times.append([track, time])
-        received_requests.pop(i)
+            track = self.received_requests[min_i][0]
+            if self.direction is None:
+                if track - self.current_loc >= 0:
+                    self.direction = 1
+                else:
+                    self.direction = -1
 
-        if len(remain_requests) == 0 and len(received_requests) == 0:
-            break
+            distance = abs(track - self.current_loc)
+            self.current_loc = track
+            if distance == 0:
+                self.time += self.base_delay + (distance / self.tracks_per_ms)
+            else:
+                self.time += self.base_delay + (distance / self.tracks_per_ms) + 1
+            self.times.append([track, self.time])
+            self.received_requests.pop(min_i)
 
-        j = 0
-        while j < len(remain_requests):
-            if remain_requests[j][1] <= time:
-                received_requests.append(remain_requests[j])
-                remain_requests.remove(remain_requests[j])
-                j = -1
-            j += 1
+            if len(self.remain_requests) == 0 and len(self.received_requests) == 0:
+                break
+            self.receive_request()
+        self.output()
 
-    output(times)
+    def find_min_dis(self):
+        min_dis = sys.maxsize
+        min_i = 0
+        i = 0
+        while i < len(self.received_requests):
+            track = self.received_requests[i][0]
+            distance = abs(track - self.current_loc)
+            if distance < min_dis:
+                if (track - self.current_loc > 0 and self.direction == -1) or (
+                        track - self.current_loc < 0 and self.direction == 1):
+                    if i == len(self.received_requests) - 1 and min_dis == sys.maxsize:
+                        self.direction *= -1
+                        i = 0
+                        continue
+                    else:
+                        i += 1
+                        continue
+                min_dis = distance
+                min_i = i
+            i += 1
+        return min_dis, min_i
+
+    def receive_request(self):
+        i = 0
+        while i < len(self.remain_requests):
+            if self.remain_requests[i][1] <= self.time:
+                self.received_requests.append(self.remain_requests[i])
+                self.remain_requests.remove(self.remain_requests[i])
+                i = -1
+            i += 1
 
 
-def fcfs(rl, tt, tracks_per_ms, head_loc, requests):
-    times = []
-    time = 0
-    base_delay = rl + tt
-    current_loc = head_loc
+class Fcfs(DiskScheduling):
+    def __init__(self):
+        super().__init__()
+        self.fcfs()
 
-    for i in range(len(requests)):
-        track = requests[i][0]
-        distance = abs(track - current_loc)
-        current_loc = track
-        if distance == 0:
-            time += base_delay + (distance / tracks_per_ms)
-        else:
-            time += base_delay + (distance / tracks_per_ms) + 1
-        times.append([track, time])
-    output(times)
-
-
-def output(times):
-    for i in range(len(times)):
-        print("Cylinder of Request: ", times[i][0], " Time Completed: ", round(times[i][1], 2))
+    def fcfs(self):
+        for i in range(len(self.requests)):
+            track = self.requests[i][0]
+            distance = abs(track - self.current_loc)
+            self.current_loc = track
+            if distance == 0:
+                self.time += self.base_delay + (distance / self.tracks_per_ms)
+            else:
+                self.time += self.base_delay + (distance / self.tracks_per_ms) + 1
+            self.times.append([track, self.time])
+        self.output()
 
 
-get_input()
+select_algorithm()
