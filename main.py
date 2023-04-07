@@ -13,7 +13,7 @@ def select_algorithm():
         else:
             elevator = Elevator()
             fcfs = Fcfs(elevator.requests, elevator.tracks_per_ms, elevator.head_loc, elevator.base_delay)
-            print(f'\nelevator finish time: {round(elevator.time, 2)}\nfcfs finish time: {round(fcfs.time, 2)}')
+            print(f'\neElevator finish time: {round(elevator.time, 2)}\nFCFS finish time: {round(fcfs.time, 2)}')
 
     except Exception as e:
         print('wrong input: ', e)
@@ -43,7 +43,7 @@ class DiskScheduling:
 
             self.current_loc = self.head_loc
         except Exception as e:
-            print('wrong input: ', e)
+            print('Wrong input: ', e)
             sys.exit(-1)
 
     def set_requests(self):
@@ -59,13 +59,13 @@ class DiskScheduling:
                     request = input("-> ").split(' ')
                     self.requests.append([int(request[0]), int(request[1])])
         except Exception as e:
-            print('wrong input: ', e)
+            print('Wrong input: ', e)
             sys.exit(-1)
 
     def create_requests(self, requests_num):
         try:
             self.requests = [[self.head_loc, 0], ]
-            time_range = int(input("Please enter range of time(>100): "))
+            time_range = int(input("Please enter range of time: "))
 
             for i in range(requests_num - 1):
                 request = rd.randrange(0, 65536, self.tracks_per_ms)
@@ -75,17 +75,17 @@ class DiskScheduling:
 
             self.print_request()
         except Exception as e:
-            print('wrong input: ', e)
+            print('Wrong input: ', e)
             sys.exit(-1)
 
     def print_request(self):
-        print('requests:')
+        print('Requests:')
         for request in self.requests:
             print(f"{request[0]}{' ' * (10 - len(str(request[0])))}{request[1]}")
         print('*' * 50)
 
     def output(self, name):
-        print(f'\n{name} algorithm')
+        print(f'\n{name} Algorithm')
         for i in range(len(self.times)):
             print("Cylinder of Request: ", self.times[i][0], " Time Completed: ", round(self.times[i][1], 2))
         print('*' * 50)
