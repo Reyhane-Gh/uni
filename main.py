@@ -3,60 +3,92 @@ import sys
 
 
 def select_algorithm():
-    algorithm = int(input("Select algorithm:\n1-elevator    2-fcfs\n-> "))
+    try:
+        algorithm = int(input("Select algorithm:\n1-elevator    2-fcfs    3-both\n-> "))
 
-    if algorithm == 1:
-        Elevator()
-    else:
-        Fcfs()
+        if algorithm == 1:
+            Elevator()
+        elif algorithm == 2:
+            Fcfs()
+        else:
+            elevator = Elevator()
+            fcfs = Fcfs(elevator.requests, elevator.tracks_per_ms, elevator.head_loc, elevator.base_delay)
+            print(f'\nelevator finish time: {round(elevator.time, 2)}\nfcfs finish time: {round(fcfs.time, 2)}')
+
+    except Exception as e:
+        print('wrong input: ', e)
+        sys.exit(-1)
 
 
 class DiskScheduling:
-    def __init__(self):
-        self.requests = []
-        self.times = []
-        self.time = 0
-        rl = float(input("Rotational Latency: "))
-        tt = float(input("Transport Time: "))
-        self.tracks_per_ms = int(input("Number of Tracks per ms: "))
-        self.head_loc = int(input("Current Location of Header: "))
-        self.base_delay = rl + tt
-        self.current_loc = self.head_loc
+    def __init__(self, *args):
+        try:
+            self.requests = []
+            self.times = []
+            self.time = 0
 
-        self.set_requests()
+            if len(args) == 0:
+                rl = float(input("Rotational Latency: "))
+                tt = float(input("Transport Time: "))
+                self.tracks_per_ms = int(input("Number of Tracks per ms: "))
+                self.head_loc = int(input("Current Location of Header: "))
+                self.base_delay = rl + tt
+                self.current_loc = self.head_loc
+                self.set_requests()
+            else:
+                self.requests = args[0]
+                self.tracks_per_ms = args[1]
+                self.head_loc = args[2]
+                self.base_delay = args[3]
+
+            self.current_loc = self.head_loc
+        except Exception as e:
+            print('wrong input: ', e)
+            sys.exit(-1)
 
     def set_requests(self):
-        request = int(input("\nSelect requests:\n1-random requests   2-set requests\n-> "))
-        if request == 1:
-            requests_num = int(input("\nPlease enter number of requests: "))
-            self.create_requests(requests_num)
-        else:
-            requests_num = int(input("\nPlease enter number of requests: "))
-            print('Enter requests:(Ex: 24000 2)')
-            for i in range(requests_num):
-                request = input("-> ").split(' ')
-                self.requests.append([int(request[0]), int(request[1])])
+        try:
+            request = int(input("\nSelect requests:\n1-random requests   2-set requests\n-> "))
+            if request == 1:
+                requests_num = int(input("\nPlease enter number of requests: "))
+                self.create_requests(requests_num)
+            else:
+                requests_num = int(input("\nPlease enter number of requests: "))
+                print('Enter requests:(Ex: 24000 2)')
+                for i in range(requests_num):
+                    request = input("-> ").split(' ')
+                    self.requests.append([int(request[0]), int(request[1])])
+        except Exception as e:
+            print('wrong input: ', e)
+            sys.exit(-1)
 
     def create_requests(self, requests_num):
-        self.requests = [[self.head_loc, 0], ]
+        try:
+            self.requests = [[self.head_loc, 0], ]
+            time_range = int(input("Please enter range of time(>100): "))
 
-        for i in range(requests_num - 1):
-            request = rd.randrange(0, 65536, self.tracks_per_ms)
-            time = rd.randrange(0, 100, 10)
-            self.requests.append([request, time])
-        self.requests.sort(key=lambda x: x[1])
+            for i in range(requests_num - 1):
+                request = rd.randrange(0, 65536, self.tracks_per_ms)
+                time = rd.randrange(0, time_range, 10)
+                self.requests.append([request, time])
+            self.requests.sort(key=lambda x: x[1])
 
-        self.print_request()
+            self.print_request()
+        except Exception as e:
+            print('wrong input: ', e)
+            sys.exit(-1)
 
     def print_request(self):
         print('requests:')
         for request in self.requests:
             print(f"{request[0]}{' ' * (10 - len(str(request[0])))}{request[1]}")
-        print('*' * 15, '\n')
+        print('*' * 50)
 
-    def output(self):
+    def output(self, name):
+        print(f'\n{name} algorithm')
         for i in range(len(self.times)):
             print("Cylinder of Request: ", self.times[i][0], " Time Completed: ", round(self.times[i][1], 2))
+        print('*' * 50)
 
 
 class Elevator(DiskScheduling):
@@ -98,7 +130,7 @@ class Elevator(DiskScheduling):
             if len(self.remain_requests) == 0 and len(self.received_requests) == 0:
                 break
             self.receive_request()
-        self.output()
+        self.output('Elevator')
 
     def find_min_dis(self):
         min_dis = sys.maxsize
@@ -133,8 +165,8 @@ class Elevator(DiskScheduling):
 
 
 class Fcfs(DiskScheduling):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
         self.fcfs()
 
     def fcfs(self):
@@ -147,7 +179,7 @@ class Fcfs(DiskScheduling):
             else:
                 self.time += self.base_delay + (distance / self.tracks_per_ms) + 1
             self.times.append([track, self.time])
-        self.output()
+        self.output('Fcfs')
 
 
 select_algorithm()
