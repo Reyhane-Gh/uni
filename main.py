@@ -65,7 +65,7 @@ class DiskScheduling:
     def create_requests(self, requests_num):
         try:
             self.requests = [[self.head_loc, 0], ]
-            time_range = int(input("Please enter range of time(>100): "))
+            time_range = int(input("Please enter range of time: "))
 
             for i in range(requests_num - 1):
                 request = rd.randrange(0, 65536, self.tracks_per_ms)
@@ -113,9 +113,9 @@ class Elevator(DiskScheduling):
 
             track = self.received_requests[min_i][0]
             if self.direction is None:
-                if track - self.current_loc >= 0:
+                if track - self.current_loc > 0:
                     self.direction = 1
-                else:
+                elif track - self.current_loc < 0:
                     self.direction = -1
 
             distance = abs(track - self.current_loc)
